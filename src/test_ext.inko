@@ -1,0 +1,31 @@
+import std::cmp::(Equal)
+import std::fmt
+import std::test::(Test, Failure)
+import debug_ext::(format)
+
+# Extend the Test class with some extra assertions that I find useful.
+impl Test {
+  # Asserts that the given string contains the expected string
+  fn pub mut string_contains(container: ref String, contained: ref String) {
+    if (container.contains?(contained)) { return }
+    
+    @failures.push(Failure.new(container.clone(), "should contain {contained}"))
+  }
+
+
+  # Asserts that the given closure throws the expected value.
+  #
+  # Different from std::throw in that it asserts that the expected value is thrown
+  fn pub mut throws[E: Equal + fmt::Format](expected: E, block: fn !! E) {
+    try {
+      block.call 
+    }
+      else (got) {
+      if got == expected { return }
+      @failures.push(Failure.new("threw {format(got)}", "to throw {format(expected)}"))
+      return
+    }
+    @failures.push(Failure.new('no value is thrown', "{format(expected)} to be thrown"))
+
+  }
+}

@@ -1,0 +1,14 @@
+import std::env
+import std::stdio::STDOUT
+import std::test::Tests
+import test_argparse
+
+class async Main {
+  fn async main {
+    let tests = Tests.new
+    test_argparse.tests(tests)
+
+    tests.pattern = env.arguments.into_iter.next
+    tests.run
+  }
+}

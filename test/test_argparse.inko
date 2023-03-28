@@ -1,0 +1,183 @@
+import std::test::Tests
+import std::stdio::STDOUT
+import test_ext
+import argparse::(ArgumentParser, ArgumentType)
+import debug_ext::(debug)
+
+
+fn pub tests(t: mut Tests) {
+  t.test('Can construct argument parser') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    t.string_contains(parser.help, "A test program")
+    t.string_contains(parser.help, "A test program")
+    t.string_contains(parser.help, "Options:")
+    t.false(parser.help.contains?("Arguments:"))
+    t.string_contains(parser.help, "Show this help text and exit")
+  }
+
+  test_add_argument(t)
+  test_add_option(t)
+  test_parse(t)
+}
+
+fn test_add_argument(t: mut Tests) {
+  t.test('Can add a string argument') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("string_arg", ArgumentType.String, "something with a string")
+
+    t.string_contains(parser.help, "string_arg")
+    t.string_contains(parser.help, "Arguments:")
+    t.string_contains(parser.help, "something with a string")
+  }
+
+  t.test('Can add an int argument') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("int_arg", ArgumentType.Int, "something with an int")
+
+    t.string_contains(parser.help, "int_arg")
+    t.string_contains(parser.help, "Arguments:")
+    t.string_contains(parser.help, "something with an int")
+  }
+
+  t.test('Can add a bool argument') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("bool_arg", ArgumentType.Bool, "something with a bool")
+
+    t.string_contains(parser.help, "bool_arg")
+    t.string_contains(parser.help, "Arguments:")
+    t.string_contains(parser.help, "something with a bool")
+  }
+}
+
+fn test_add_option(t: mut Tests) {
+  t.test('Can add a string option') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("string_opt", Option.Some("S"), ArgumentType.String, "something with a string")
+
+    t.string_contains(parser.help, "--string_opt")
+    t.string_contains(parser.help, "-S")
+    t.string_contains(parser.help, "something with a string")
+  }
+
+  t.test('Can add an int option') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("int_opt", Option.Some("I"), ArgumentType.Int, "something with an int")
+
+    t.string_contains(parser.help, "--int_opt")
+    t.string_contains(parser.help, "-I")
+    t.string_contains(parser.help, "something with an int")
+  }
+
+  t.test('Can add a bool option') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("bool_opt", Option.Some("B"), ArgumentType.Bool, "something with a bool")
+
+    t.string_contains(parser.help, "--bool_opt")
+    t.string_contains(parser.help, "-B")
+    t.string_contains(parser.help, "something with a bool")
+  }
+
+  t.test('Can add with None short option') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("bool_opt", Option.None, ArgumentType.Bool, "with no short opt")
+    t.string_contains(parser.help, "--bool_opt")
+  }
+}
+
+fn test_parse(t: mut Tests) {
+  t.test('Throws if receives unexpected arguments') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    t.throws("Too many arguments") fn {try parser.parse(["unexpected arg"])}
+  }
+
+  t.test('Throws if receievs unexpected options') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    t.throws("Unexpected option `--unexpected`") fn {try parser.parse(["--unexpected"])}
+    t.throws("Unexpected short option `-u`") fn {try parser.parse(["-u"])}
+  }
+
+  t.test('Parses help option') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    # There doesn't seem to be an easy way to mock/capture/suppress stdout
+    # here, so this puts extraneous output in the tests
+    t.no_throw fn {try parser.parse(["--help"])}
+    t.no_throw fn {try parser.parse(["-h"])}
+  }
+
+  t.test('Throws if receives insufficient arguments') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("string_arg", ArgumentType.String, "some help text")
+    t.throws("Insufficient Arguments") fn {try parser.parse([])}
+  }
+
+  t.test('Can parse string arguments') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("string_arg", ArgumentType.String, "some help text")
+    let result = try! parser.parse(["a_string"])
+    t.equal(result.string_argument("string_arg"), "a_string")
+  }
+
+  t.test('Can parse integer arguments') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("int_arg", ArgumentType.Int, "some help text")
+    let result = try! parser.parse(["5"])
+    t.equal(result.int_argument("int_arg"), 5)
+    t.throws('Could not convert `XXX` to int') fn {try parser.parse(["XXX"])}
+  }
+
+  t.test('Can parse boolean arguments') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_argument("bool_arg", ArgumentType.Bool, "some help text")
+    let result = try! parser.parse(["true"])
+    t.equal(result.bool_argument("bool_arg"), true)
+    let result = try! parser.parse(["on"])
+    t.equal(result.bool_argument("bool_arg"), true)
+    let result = try! parser.parse(["yes"])
+    t.equal(result.bool_argument("bool_arg"), true)
+    let result = try! parser.parse(["false"])
+    t.equal(result.bool_argument("bool_arg"), false)
+    let result = try! parser.parse(["off"])
+    t.equal(result.bool_argument("bool_arg"), false)
+    let result = try! parser.parse(["no"])
+    t.equal(result.bool_argument("bool_arg"), false)
+    t.throws('Could not convert `XXX` to bool') fn {try parser.parse(["XXX"])}
+  }
+
+  t.test('Can parse string options') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("string_opt", Option.Some('s'), ArgumentType.String, "some help text")
+    let result = try! parser.parse(["--string_opt", "some_value"])
+    t.equal(result.string_option('string_opt'), Option.Some('some_value'))
+    let result = try! parser.parse(["-s", "some_value"])
+    t.equal(result.string_option('string_opt'), Option.Some('some_value'))
+    let result = try! parser.parse([])
+    t.equal(result.int_option('string_opt'), Option.None)
+    t.throws('Option --string_opt expected an argument') fn {try parser.parse(['--string_opt'])}
+    t.throws('Option -s expected an argument') fn {try parser.parse(['-s'])}
+  }
+
+  t.test('Can parse int options') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("int_opt", Option.Some('i'), ArgumentType.Int, "some help text")
+    let result = try! parser.parse(["--int_opt", "5"])
+    t.equal(result.int_option('int_opt'), Option.Some(5))
+    let result = try! parser.parse(["-i", "5"])
+    t.equal(result.int_option('int_opt'), Option.Some(5))
+    let result = try! parser.parse([])
+    t.equal(result.int_option('int_opt'), Option.None)
+    t.throws('Option --int_opt expected an argument') fn {try parser.parse(['--int_opt'])}
+    t.throws('Option -i expected an argument') fn {try parser.parse(['-i'])}
+    t.throws('Could not convert `XXX` to int') fn {try parser.parse(['-i', "XXX"])}
+  }
+
+  t.test('Can parse bool options') fn (t) {
+    let parser = ArgumentParser.new("A test program")
+    parser.add_option("bool_opt", Option.Some('b'), ArgumentType.Bool, "some help text")
+    let result = try! parser.parse(["--bool_opt"])
+    t.equal(result.bool_option('bool_opt'), true)
+    let result = try! parser.parse(["-b"])
+    t.equal(result.bool_option('bool_opt'), true)
+    let result = try! parser.parse([])
+    t.equal(result.bool_option('bool_opt'), false)
+  }
+}
