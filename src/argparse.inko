@@ -279,7 +279,7 @@ class pub ArgumentParser {
   # Every argument has a type that is validated at parse time.
   #
   # Returns self borrowed mutably so you can chain calls into a builder.
-  fn pub mut add_argument(name: String, argument_type: ArgumentType, help_text: String) -> mut Self {
+  fn pub move add_argument(name: String, argument_type: ArgumentType, help_text: String) -> Self {
     if @arguments.contains?(name) or @options.contains?(name) {
       panic("Argument or option with name {name} already exists")
     }
@@ -298,7 +298,7 @@ class pub ArgumentParser {
   # As the name suggestios, options are not required, and default to None if not specified.
   # 
   # Returns self borrowed mutably so you can chain calls into a builder.
-  fn pub mut add_option(long: String, short: Option[String], argument_type: ArgumentType, help_text: String) -> mut Self {
+  fn pub move add_option(long: String, short: Option[String], argument_type: ArgumentType, help_text: String) -> Self {
     if long.starts_with?('-') {
       panic("Do not include -- prefix in the option names")
     }
@@ -467,8 +467,8 @@ class pub ArgumentParser {
 class async Main {
   fn async main {
     let stdout = STDOUT.new
-    let parser = ArgumentParser.new("A Program for testing ArgumentParser")
-    parser
+    let parser = 
+    ArgumentParser.new("A Program for testing ArgumentParser")
       .add_argument("first_arg", ArgumentType.String, "The first arg in the command")
       .add_argument("int_arg", ArgumentType.Int, "The second argument in the command")
       .add_option("optional_arg", Option.Some("o"), ArgumentType.String, "An option you may or may not need")

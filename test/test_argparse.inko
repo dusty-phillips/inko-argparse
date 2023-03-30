@@ -23,7 +23,7 @@ fn pub tests(t: mut Tests) {
 fn test_add_argument(t: mut Tests) {
   t.test('Can add a string argument') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("string_arg", ArgumentType.String, "something with a string")
+      .add_argument("string_arg", ArgumentType.String, "something with a string")
 
     t.string_contains(parser.help, "string_arg")
     t.string_contains(parser.help, "Arguments:")
@@ -32,7 +32,7 @@ fn test_add_argument(t: mut Tests) {
 
   t.test('Can add an int argument') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("int_arg", ArgumentType.Int, "something with an int")
+      .add_argument("int_arg", ArgumentType.Int, "something with an int")
 
     t.string_contains(parser.help, "int_arg")
     t.string_contains(parser.help, "Arguments:")
@@ -41,7 +41,7 @@ fn test_add_argument(t: mut Tests) {
 
   t.test('Can add a bool argument') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("bool_arg", ArgumentType.Bool, "something with a bool")
+      .add_argument("bool_arg", ArgumentType.Bool, "something with a bool")
 
     t.string_contains(parser.help, "bool_arg")
     t.string_contains(parser.help, "Arguments:")
@@ -52,7 +52,7 @@ fn test_add_argument(t: mut Tests) {
 fn test_add_option(t: mut Tests) {
   t.test('Can add a string option') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("string_opt", Option.Some("S"), ArgumentType.String, "something with a string")
+      .add_option("string_opt", Option.Some("S"), ArgumentType.String, "something with a string")
 
     t.string_contains(parser.help, "--string_opt")
     t.string_contains(parser.help, "-S")
@@ -61,7 +61,7 @@ fn test_add_option(t: mut Tests) {
 
   t.test('Can add an int option') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("int_opt", Option.Some("I"), ArgumentType.Int, "something with an int")
+      .add_option("int_opt", Option.Some("I"), ArgumentType.Int, "something with an int")
 
     t.string_contains(parser.help, "--int_opt")
     t.string_contains(parser.help, "-I")
@@ -70,7 +70,7 @@ fn test_add_option(t: mut Tests) {
 
   t.test('Can add a bool option') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("bool_opt", Option.Some("B"), ArgumentType.Bool, "something with a bool")
+      .add_option("bool_opt", Option.Some("B"), ArgumentType.Bool, "something with a bool")
 
     t.string_contains(parser.help, "--bool_opt")
     t.string_contains(parser.help, "-B")
@@ -79,7 +79,7 @@ fn test_add_option(t: mut Tests) {
 
   t.test('Can add with None short option') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("bool_opt", Option.None, ArgumentType.Bool, "with no short opt")
+      .add_option("bool_opt", Option.None, ArgumentType.Bool, "with no short opt")
     t.string_contains(parser.help, "--bool_opt")
   }
 }
@@ -106,20 +106,20 @@ fn test_parse(t: mut Tests) {
 
   t.test('Throws if receives insufficient arguments') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("string_arg", ArgumentType.String, "some help text")
+      .add_argument("string_arg", ArgumentType.String, "some help text")
     t.throws("Insufficient Arguments") fn {try parser.parse([])}
   }
 
   t.test('Can parse string arguments') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("string_arg", ArgumentType.String, "some help text")
+      .add_argument("string_arg", ArgumentType.String, "some help text")
     let result = try! parser.parse(["a_string"])
     t.equal(result.string_argument("string_arg"), "a_string")
   }
 
   t.test('Can parse integer arguments') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("int_arg", ArgumentType.Int, "some help text")
+      .add_argument("int_arg", ArgumentType.Int, "some help text")
     let result = try! parser.parse(["5"])
     t.equal(result.int_argument("int_arg"), 5)
     t.throws('Could not convert `XXX` to int') fn {try parser.parse(["XXX"])}
@@ -127,7 +127,7 @@ fn test_parse(t: mut Tests) {
 
   t.test('Can parse boolean arguments') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_argument("bool_arg", ArgumentType.Bool, "some help text")
+      .add_argument("bool_arg", ArgumentType.Bool, "some help text")
     let result = try! parser.parse(["true"])
     t.equal(result.bool_argument("bool_arg"), true)
     let result = try! parser.parse(["on"])
@@ -145,7 +145,7 @@ fn test_parse(t: mut Tests) {
 
   t.test('Can parse string options') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("string_opt", Option.Some('s'), ArgumentType.String, "some help text")
+      .add_option("string_opt", Option.Some('s'), ArgumentType.String, "some help text")
     let result = try! parser.parse(["--string_opt", "some_value"])
     t.equal(result.string_option('string_opt'), Option.Some('some_value'))
     let result = try! parser.parse(["-s", "some_value"])
@@ -158,7 +158,7 @@ fn test_parse(t: mut Tests) {
 
   t.test('Can parse int options') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("int_opt", Option.Some('i'), ArgumentType.Int, "some help text")
+      .add_option("int_opt", Option.Some('i'), ArgumentType.Int, "some help text")
     let result = try! parser.parse(["--int_opt", "5"])
     t.equal(result.int_option('int_opt'), Option.Some(5))
     let result = try! parser.parse(["-i", "5"])
@@ -172,7 +172,7 @@ fn test_parse(t: mut Tests) {
 
   t.test('Can parse bool options') fn (t) {
     let parser = ArgumentParser.new("A test program")
-    parser.add_option("bool_opt", Option.Some('b'), ArgumentType.Bool, "some help text")
+      .add_option("bool_opt", Option.Some('b'), ArgumentType.Bool, "some help text")
     let result = try! parser.parse(["--bool_opt"])
     t.equal(result.bool_option('bool_opt'), true)
     let result = try! parser.parse(["-b"])

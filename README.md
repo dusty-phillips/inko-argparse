@@ -47,7 +47,6 @@ class async Main {
   fn async main {
     let stdout = STDOUT.new
     let parser = ArgumentParser.new("A Program for testing ArgumentParser")
-    parser
       .add_argument("first_arg", ArgumentType.String, "The first arg in the command")
       .add_argument("int_arg", ArgumentType.Int, "The second argument in the command")
       .add_option("optional_arg", Option.Some("o"), ArgumentType.String, "An option you may or may not need")
