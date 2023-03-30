@@ -1,5 +1,4 @@
 import std::env
-import std::map
 import std::string::(StringBuffer,ToString)
 import std::stdio::STDOUT
 import std::fmt::(Format, Formatter)
@@ -128,8 +127,8 @@ impl Format for ArgumentValue {
 # is that options return Option while arguments return unwrapped
 # values.
 class pub ParsedArguments {
-  let @arguments: map::Map[String, ArgumentValue]
-  let @options: map::Map[String, Option[ArgumentValue]]
+  let @arguments: Map[String, ArgumentValue]
+  let @options: Map[String, Option[ArgumentValue]]
 
   # Get an integer argument.
   fn pub int_argument(argument_name: ref String) -> Int {
@@ -256,20 +255,20 @@ class OptionalArgument {
 #
 # Note: This class does not currently support subcommands.
 class pub ArgumentParser {
-  let @arguments: map::Map[String, Argument]
+  let @arguments: Map[String, Argument]
   # note: short_options comes before options because short contains references
   # to values in options, so short needs to be dropped first
-  let @short_options: map::Map[String, ref OptionalArgument]
-  let @options: map::Map[String, OptionalArgument]
+  let @short_options: Map[String, ref OptionalArgument]
+  let @options: Map[String, OptionalArgument]
   let @prog_text: String
 
 
   # Construct a new ArgumentParser, passing in the program level help text describing what the application does.
   fn pub static new(prog_text: String) -> Self {
     Self {
-      @arguments = map::Map.new
-      @options = map::Map.new
-      @short_options = map::Map.new
+      @arguments = Map.new
+      @options = Map.new
+      @short_options = Map.new
       @prog_text = prog_text
     }
   }
@@ -387,8 +386,8 @@ class pub ArgumentParser {
   fn pub parse(arguments: Array[String]) !! String -> ParsedArguments {
     let values = arguments.into_iter
     let argument_names = @arguments.iter
-    let parsed_arguments: map::Map[String, ArgumentValue] = map::Map.new
-    let parsed_options: map::Map[String, Option[ArgumentValue]] = map::Map.new
+    let parsed_arguments: Map[String, ArgumentValue] = Map.new
+    let parsed_options: Map[String, Option[ArgumentValue]] = Map.new
 
     loop {
       match values.next {
