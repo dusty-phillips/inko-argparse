@@ -1,10 +1,12 @@
 import std::env
+import std::iter::(Iter)
 import std::string::(StringBuffer,ToString)
 import std::stdio::STDOUT
 import std::fmt::(Format, Formatter)
 import std::int::(Int as StdInt)
 import option_ext
 import debug_ext::(debug)
+import tokenizer::(Tokenizer, Token)
 
 # All arguments are strongly typed and automatically converted
 # based on the value of this enum.
@@ -273,7 +275,7 @@ class pub ArgumentParser {
     }
   }
 
-  # Add a command-line argument to the parser. Arguments are required and must be provided
+  # Add a command-line positional argument to the parser. Arguments are required and must be provided
   # in order.
   #
   # Every argument has a type that is validated at parse time.
@@ -309,6 +311,10 @@ class pub ArgumentParser {
       }
       case _ -> nil
     }
+
+    # TODO: should probably fail if long contains special characters other than _.
+    # Definitely fail if it contains `=`. Other special chars may need to wait for
+    # inko to gain regex support.
 
     if @arguments.contains?(long) or @options.contains?(long) {
       panic("Argument or option with name {long} already exists")
@@ -384,7 +390,7 @@ class pub ArgumentParser {
   # parse arguments. You'll probably want to wrap it in a try that outputs
   # the string and help text on error.
   fn pub parse(arguments: Array[String]) !! String -> ParsedArguments {
-    let values = arguments.into_iter
+    let values = Tokenizer.new(arguments)
     let argument_names = @arguments.iter
     let parsed_arguments: Map[String, ArgumentValue] = Map.new
     let parsed_options: Map[String, Option[ArgumentValue]] = Map.new
@@ -392,48 +398,29 @@ class pub ArgumentParser {
     loop {
       match values.next {
         case None -> break
-        case Some(help) if help == "--help" or help == "-h" -> {
+        case Some(Long('help')) or Some(Short('h')) -> {
           print_help()
           break
         }
-        case Some(full_name) if full_name.starts_with?('--') -> {
-          let equals_index = full_name.byte_index('=', 2)
-          let option_name = match ref equals_index {
-            case None -> full_name.slice(2, full_name.size)
-            case Some(idx) -> full_name.slice(2, idx.clone - 2)
-          }
-          let option = try @options.get(option_name).unwrap_or_throw("Unexpected option `--{option_name}`")
-          match option.type {
-            case Bool -> parsed_options[option.long.clone] = Option.Some(ArgumentValue.Bool(true))
-            case type -> {
-              match equals_index {
-                case Some(idx) -> parsed_options[option_name] = Option.Some(try type.to_argument_value(full_name.slice(idx+1, full_name.size)))
-                case None -> {
-                  let option_value = try values.next.unwrap_or_throw("Option {full_name} expected an argument")
-                  parsed_options[option_name] = Option.Some(try type.to_argument_value(option_value))
-                }
-              }
-            }
-          }
+        case Some(Long(option_name)) -> {
+          let option = try @options.get(option_name).unwrap_or_throw(
+            "Unexpected option `--{option_name}`"
+          )
+          parsed_options[option.long.clone] = try extract_option(option, values)
         }
-        case Some(full_name) if full_name.starts_with?('-') and full_name.size == 2 -> {
-          let short_name = full_name.slice(1,2)
-          let option = try @short_options.get(short_name).unwrap_or_throw("Unexpected short option `-{short_name}`")
-          match option.type {
-            case Bool -> parsed_options[option.long.clone] = Option.Some(ArgumentValue.Bool(true))
-            case type -> {
-                  let option_value = try values.next.unwrap_or_throw("Option -{short_name} expected an argument")
-                  parsed_options[option.long.clone] = Option.Some(try type.to_argument_value(option_value))
-              }
-          }
+        case Some(Short(short_name)) -> {
+          let option = try @short_options.get(short_name).unwrap_or_throw(
+            "Unexpected short option `-{short_name}`"
+          )
+          parsed_options[option.long.clone] = try extract_option(option, values)
         }
-        case Some(invalid_option) if invalid_option.starts_with?('-') -> throw "Unexpected option `{invalid_option}`"
-        case Some(argument_value) ->  {
+        case Some(Value(argument_value)) ->  {
           let entry = try argument_names.next.unwrap_or_throw("Too many arguments")
           parsed_arguments[entry.key.clone] = try entry.value.type.to_argument_value(argument_value) 
         }
       }
     }
+
 
     if argument_names.next.some? {
       throw "Insufficient Arguments"
@@ -463,4 +450,22 @@ class pub ArgumentParser {
   }
 }
 
+# Helper function to set the parsed_option based on possibly getting a value
+# from the iterator (or not, if it's a boolean).
+fn extract_option(option: ref OptionalArgument, values: mut Tokenizer) !! String -> Option[ArgumentValue] {
+  match option.type {
+    case Bool -> Option.Some(
+      ArgumentValue.Bool(true)
+    )
+    case type -> {
+      let short_name_help = (option.short.as_ref.map fn (s) {"(-{s}) "}).unwrap_or("")
+      let option_value = (try values.next.unwrap_or_throw(
+        "Option --{option.long} {short_name_help}expected an argument"
+      )).unwrap
+      Option.Some(
+        try type.to_argument_value(option_value)
+      )
+    }
+  }
+}
 

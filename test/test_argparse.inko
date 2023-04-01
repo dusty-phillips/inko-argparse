@@ -152,8 +152,8 @@ fn test_parse(t: mut Tests) {
     t.equal(result.string_option('string_opt'), Option.Some('some_value'))
     let result = try! parser.parse([])
     t.equal(result.int_option('string_opt'), Option.None)
-    t.throws('Option --string_opt expected an argument') fn {try parser.parse(['--string_opt'])}
-    t.throws('Option -s expected an argument') fn {try parser.parse(['-s'])}
+    t.throws('Option --string_opt (-s) expected an argument') fn {try parser.parse(['--string_opt'])}
+    t.throws('Option --string_opt (-s) expected an argument') fn {try parser.parse(['-s'])}
   }
 
   t.test('Can parse int options') fn (t) {
@@ -165,8 +165,8 @@ fn test_parse(t: mut Tests) {
     t.equal(result.int_option('int_opt'), Option.Some(5))
     let result = try! parser.parse([])
     t.equal(result.int_option('int_opt'), Option.None)
-    t.throws('Option --int_opt expected an argument') fn {try parser.parse(['--int_opt'])}
-    t.throws('Option -i expected an argument') fn {try parser.parse(['-i'])}
+    t.throws('Option --int_opt (-i) expected an argument') fn {try parser.parse(['--int_opt'])}
+    t.throws('Option --int_opt (-i) expected an argument') fn {try parser.parse(['-i'])}
     t.throws('Could not convert `XXX` to int') fn {try parser.parse(['-i', "XXX"])}
   }
 
