@@ -30,7 +30,7 @@ Once you have `ipm` on your path, simply run the following to install argparse:
 
 ```sh
 ipm init # if you don't already have an inko.pkg
-ipm add github.com/dusty-phillips/inko-argparse 0.0.1`
+ipm add github.com/dusty-phillips/inko-argparse 0.0.2`
 ipm sync
 ```
 
