@@ -1,0 +1,145 @@
+import std::cmp::Equal
+import std::iter::(Iter)
+import std::fmt::(Format, Formatter)
+
+# A typed token for command line parsing
+class pub enum Token {
+  # An undecorated value.
+  # May represent a positional argument or the value of an optional argument.
+  case Value(String)
+
+  # A long option name.
+  # User supplied it as `--name`, but the `--` will be stripped off by the tokenizer.
+  case Long(String)
+
+  # A short option name.
+  # User supplied it as `-x`, but the `-` will be stripped off by the tokenizer.
+  # Note that the value `--`, which some programs use as a special case indicator,
+  # will be returned as a Short('-').
+  case Short(String)
+
+  # Returns the string inside the option no matter what type it is.
+  #
+  # This is most likely useful for forcing an option value to be a Value no
+  # matter what it was parsed is. For example if you pass `--option_name --some_value`,
+  # then the option `option_name` should get the value `--some_value` even though it
+  # was parsed as a Long.
+  fn pub unwrap() -> String {
+    match self {
+      case Value(value) -> value
+      case Long(value) -> value
+      case Short(value) -> value
+    }
+  }
+}
+
+impl Format for Token {
+  fn pub fmt(formatter: mut Formatter) {
+    match self {
+      case Value(value) -> {
+        formatter.write("Value(")
+        formatter.write(value)
+        formatter.write(")")
+      }
+      case Long(value) -> {
+        formatter.write("Long(")
+        formatter.write(value)
+        formatter.write(")")
+      }
+      case Short(value) -> {
+        formatter.write("Short(")
+        formatter.write(value)
+        formatter.write(")")
+      }
+    }
+  }
+}
+
+impl Equal for Token {
+  fn pub ==(other: ref Self) -> Bool {
+    match (self, other) {
+      case (Value(self_value), Value(other_value)) if self_value == other_value -> true
+      case (Long(self_value), Long(other_value)) if self_value == other_value -> true
+      case (Short(self_value), Short(other_value)) if self_value == other_value -> true
+      # I don't think I like this because equality will silently
+      # fail if I add a new Token type and forget to update this 
+      # match statement. But it's so readable. Going to leave it
+      # and see if I get burned
+      case _ -> false
+
+    }
+  }
+}
+
+# Tokenizer for command line arguments. 
+#
+# Pass in the user-supplied arguments and it will spit out tokens.
+# The tokenizer is not aware of the "expected" values used in the parser;
+# it is just an Iterator over Tokens.
+#
+# All entries are considered valid. This means that some options that you
+# might consider malformed are always returned as Values. Noteably, this includes
+# things like `--missing_value_after=` and `-long_string_after_dash` which are both parsed
+# as Values.
+#
+# For the most part, each entry in the arguments array is one token. 
+# However, options can be comprised of both a name and a value when
+# separated by =, in which case two tokens are emitted.
+class pub Tokenizer {
+  let @arguments: Array[String]
+  let @next_value: Option[String]
+
+  fn pub static new(arguments: Array[String]) -> Self {
+    arguments.reverse # Stack
+    Self {
+      @arguments=arguments
+      @next_value=Option.None
+    }
+  }
+}
+
+impl Iter[Token, Nil] for Tokenizer {
+  fn pub mut next -> Option[Token] {
+    match @next_value {
+      case None -> nil
+      case Some(value) -> {
+        @next_value = Option.None
+        return Option.Some(Token.Value(value))
+      }
+    }
+
+    match arguments.pop {
+      case None -> Option.None
+      case Some(value) if short_option?(value) -> {
+        Option.Some(Token.Short(value.slice(1, 1)))
+      }
+      case Some(value) if long_option?(value) -> {
+        let equals_index = value.byte_index('=', 2)
+        match ref equals_index {
+          case None -> Option.Some(Token.Long(value.slice(2, value.size)))
+          case Some(index) if index == (value.size - 1) -> {
+            # I arbitrarily decided that `--ends_with_equals=` should parse as a
+            # value token.
+            Option.Some(Token.Value(value))
+          }
+          case Some(index) -> {
+            @next_value = Option.Some(value.slice(index + 1, value.size))
+            Option.Some(Token.Long(value.slice(2, index - 2)))
+          }
+        }
+      }
+      case Some(value) -> {
+        Option.Some(Token.Value(value))
+      }
+    }
+  }
+}
+
+fn short_option?(value: ref String) -> Bool {
+  value.size == 2 and value.starts_with?('-')
+}
+
+fn long_option?(value: ref String) -> Bool {
+  value.size > 2 and value.slice(0, 2) == '--'
+}
+

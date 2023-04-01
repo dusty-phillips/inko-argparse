@@ -1,0 +1,70 @@
+import std::test::(Tests)
+import test_ext
+
+import tokenizer::(Token, Tokenizer)
+import debug_ext::(debug)
+
+
+
+fn pub tests(t: mut Tests) {
+  t.test('Can tokenize no arguments') fn (t) {
+    let tokenizer = Tokenizer.new([])
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize short option') fn (t) {
+    let tokenizer = Tokenizer.new(['-t'])
+    t.equal(tokenizer.next, Option.Some(Token.Short('t')))
+    t.none(tokenizer.next)
+  }
+  t.test('single-dash followed by long option is value') fn (t) {
+    let tokenizer = Tokenizer.new(['-some_long_word'])
+    t.equal(tokenizer.next, Option.Some(Token.Value('-some_long_word')))
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize -- as short') fn (t) {
+    let tokenizer = Tokenizer.new(['--'])
+    t.equal(tokenizer.next, Option.Some(Token.Short('-')))
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize long option') fn (t) {
+    let tokenizer = Tokenizer.new(['--long_option'])
+    t.equal(tokenizer.next, Option.Some(Token.Long('long_option')))
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize argument') fn (t) {
+    let tokenizer = Tokenizer.new(['some_value'])
+    t.equal(tokenizer.next, Option.Some(Token.Value('some_value')))
+    t.none(tokenizer.next)
+  }
+  t.test('Tokenizes long option with = as separate arg') fn (t) {
+    let tokenizer = Tokenizer.new(['--long_option=some_value'])
+    t.equal(tokenizer.next, Option.Some(Token.Long('long_option')))
+    t.equal(tokenizer.next, Option.Some(Token.Value('some_value')))
+    t.none(tokenizer.next)
+  }
+  t.test('splits on first = if there are multiple =') fn (t) {
+    let tokenizer = Tokenizer.new(['--long_option=value=with=extra=equals='])
+    t.equal(tokenizer.next, Option.Some(Token.Long('long_option')))
+    t.equal(tokenizer.next, Option.Some(Token.Value('value=with=extra=equals=')))
+    t.none(tokenizer.next)
+  }
+  t.test('Tokenizes option ending with = as value, NOT long option') fn (t) {
+    let tokenizer = Tokenizer.new(['--not_an_option='])
+    t.equal(tokenizer.next, Option.Some(Token.Value('--not_an_option=')))
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize value with -- after =') fn (t) {
+    let tokenizer = Tokenizer.new(['--long_option=--some_value--'])
+    t.equal(tokenizer.next, Option.Some(Token.Long('long_option')))
+    t.equal(tokenizer.next, Option.Some(Token.Value('--some_value--')))
+    t.none(tokenizer.next)
+  }
+  t.test('Can tokenize other values after long option') fn (t) {
+    let tokenizer = Tokenizer.new(['--long_option=some_value', 'something'])
+    t.equal(tokenizer.next, Option.Some(Token.Long('long_option')))
+    t.equal(tokenizer.next, Option.Some(Token.Value('some_value')))
+    t.equal(tokenizer.next, Option.Some(Token.Value('something')))
+    t.none(tokenizer.next)
+  }
+
+}

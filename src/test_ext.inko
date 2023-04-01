@@ -4,6 +4,9 @@ import std::test::(Test, Failure)
 import debug_ext::(format)
 
 # Extend the Test class with some extra assertions that I find useful.
+# I am patching Test here as I think these extensions could be useful
+# in the standard library or an auxilliary test library beyond this
+# project.
 impl Test {
   # Asserts that the given string contains the expected string
   fn pub mut string_contains(container: ref String, contained: ref String) {
@@ -27,5 +30,19 @@ impl Test {
     }
     @failures.push(Failure.new('no value is thrown', "{format(expected)} to be thrown"))
 
+  }
+
+  # Asserts that the given option is None
+  fn pub mut none[T: fmt::Format](value: Option[T]) {
+    if (value.some?) {
+      @failures.push(Failure.new(format(value), 'Option.None'))
+    }
+  }
+
+  # Asserts that the given option is None
+  fn pub mut some[T: fmt::Format](value: Option[T]) {
+    if (value.none?) {
+      @failures.push(Failure.new(format(value), 'Option.Some'))
+    }
   }
 }
