@@ -7,10 +7,10 @@ impl Option {
   # provided type.
   #
   # Useful where your match statement just throws on the case None
-  fn pub move unwrap_or_throw[E](error_message: E) !! E -> T {
+  fn pub move to_result[E](error_message: E) -> Result[T, E] {
     match self {
       case None -> throw error_message
-      case Some(value) -> value
+      case Some(value) -> Result.Ok(value)
     }
   }
 

@@ -19,19 +19,13 @@ It supports most of the standard stuff, though:
 
 ## Installing
 
-Inko (sort of) ships with a package manager named [ipm](https://docs.inko-lang.org/manual/main/getting-started/modules/#using-ipm)
-but the feature is so new that it isn't available for the latest release of Inko.
-So you'll need to [install Inko](https://docs.inko-lang.org/manual/main/getting-started/installation/#from-source)
-from the [main](https://github.com/inko-lang/inko) branch.
-
-Note that this means you're using a broken Inko compiler. So... good luck.
-
-Once you have `ipm` on your path, simply run the following to install argparse:
+Ensure you have inko 0.11 or later. Use `inko pkg init` to create an empty `inko.pkg` if
+one doesn't exist.
 
 ```sh
-ipm init # if you don't already have an inko.pkg
-ipm add github.com/dusty-phillips/inko-argparse 0.0.2`
-ipm sync
+inko pkg init # if you don't already have an inko.pkg
+inko pkg add github.com/dusty-phillips/inko-argparse 0.0.3`
+inko pkg sync
 ```
 
 (check the tags on this repo to determine the latest tag in case I forget to update the README)
@@ -52,10 +46,12 @@ class async Main {
       .add_option("optional_arg", Option.Some("o"), ArgumentType.String, "An option you may or may not need")
       .add_option("bool_arg", Option.None, ArgumentType.Bool, "something you can pass or not")
 
-    let parsed = try parser.parse_cli()
-     else (message) {
-      stdout.print("\n{message}\n\n{parser.help}")
-      return
+    let parsed = match parser.parse_cli() {
+      case Ok(value) -> value
+      case Error(message) -> {
+        stdout.print("\n{message}\n\n{parser.help}")
+        return
+      }
     }
 
     stdout.print(parsed.int_argument("int_arg").to_string)

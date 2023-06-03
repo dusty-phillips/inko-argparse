@@ -55,14 +55,14 @@ impl Format for Token {
   }
 }
 
-impl Equal for Token {
-  fn pub ==(other: ref Self) -> Bool {
+impl Equal[Token] for Token {
+  fn pub ==(other: ref Token) -> Bool {
     match (self, other) {
       case (Value(self_value), Value(other_value)) if self_value == other_value -> true
       case (Long(self_value), Long(other_value)) if self_value == other_value -> true
       case (Short(self_value), Short(other_value)) if self_value == other_value -> true
       # I don't think I like this because equality will silently
-      # fail if I add a new Token type and forget to update this 
+      # fail if I add a new Token type and forget to update this
       # match statement. But it's so readable. Going to leave it
       # and see if I get burned
       case _ -> false
@@ -71,7 +71,7 @@ impl Equal for Token {
   }
 }
 
-# Tokenizer for command line arguments. 
+# Tokenizer for command line arguments.
 #
 # Pass in the user-supplied arguments and it will spit out tokens.
 # The tokenizer is not aware of the "expected" values used in the parser;
@@ -82,23 +82,23 @@ impl Equal for Token {
 # things like `--missing_value_after=` and `-long_string_after_dash` which are both parsed
 # as Values.
 #
-# For the most part, each entry in the arguments array is one token. 
+# For the most part, each entry in the arguments array is one token.
 # However, options can be comprised of both a name and a value when
 # separated by =, in which case two tokens are emitted.
 class pub Tokenizer {
   let @arguments: Array[String]
   let @next_value: Option[String]
 
-  fn pub static new(arguments: Array[String]) -> Self {
+  fn pub static new(arguments: Array[String]) -> Tokenizer {
     arguments.reverse # Stack
-    Self {
+    Tokenizer {
       @arguments=arguments
       @next_value=Option.None
     }
   }
 }
 
-impl Iter[Token, Nil] for Tokenizer {
+impl Iter[Token] for Tokenizer {
   fn pub mut next -> Option[Token] {
     match @next_value {
       case None -> nil
@@ -108,7 +108,7 @@ impl Iter[Token, Nil] for Tokenizer {
       }
     }
 
-    match arguments.pop {
+    match @arguments.pop {
       case None -> Option.None
       case Some(value) if short_option?(value) -> {
         Option.Some(Token.Short(value.slice(1, 1)))

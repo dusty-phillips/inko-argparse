@@ -18,20 +18,20 @@ class pub enum ArgumentType {
   # Perform the conversion of a string value (read from the command line)
   # into the type expected by this ArgumentType.
   #
-  # Note that for required arguments booleans can be specified as yes, on, or true, 
+  # Note that for required arguments booleans can be specified as yes, on, or true,
   # but boolean options use the presence or absense of the flag to indicate truthiness.
-  fn to_argument_value(value: String) !! String -> ArgumentValue {
+  fn to_argument_value(value: String) -> Result[ArgumentValue, String] {
     match self {
-      case String -> ArgumentValue.String(value.clone)
-      case Int -> ArgumentValue.Int(
-        try StdInt.from_base10(value).unwrap_or_throw("Could not convert `{value}` to int")
-      ) 
+      case String -> Result.Ok(ArgumentValue.String(value.clone))
+      case Int -> Result.Ok(ArgumentValue.Int(
+        try StdInt.from_base10(value).to_result("Could not convert `{value}` to int")
+      ))
       case Bool -> {
         let lower = value.to_lower
         if lower == "yes" or lower == "on" or lower == "true" {
-          ArgumentValue.Bool(true)
+          Result.Ok(ArgumentValue.Bool(true))
         } else if lower == "no" or lower == "off" or lower == "false" {
-          ArgumentValue.Bool(false)
+          Result.Ok(ArgumentValue.Bool(false))
         }
         else {
           throw "Could not convert `{value}` to bool"
@@ -76,7 +76,7 @@ class enum ArgumentValue {
       case _ -> panic(panic_message)
     }
   }
-  
+
   # Extract an integer value from this argument,
   # or panic with the given message if it is not a integer value
   fn int(panic_message: String) -> Int {
@@ -134,22 +134,22 @@ class pub ParsedArguments {
 
   # Get an integer argument.
   fn pub int_argument(argument_name: ref String) -> Int {
-    @arguments[argument_name].int("{argument_name} is not an Int")
+    @arguments.get(argument_name).int("{argument_name} is not an Int")
   }
 
   # Get a boolean argument.
   fn pub bool_argument(argument_name: ref String) -> Bool {
-    @arguments[argument_name].bool("{argument_name} is not a Bool")
+    @arguments.get(argument_name).bool("{argument_name} is not a Bool")
   }
 
   # Get a string argument.
   fn pub string_argument(argument_name: ref String) -> String {
-    @arguments[argument_name].string("{argument_name} is not a String")
+    @arguments.get(argument_name).string("{argument_name} is not a String")
   }
-   
+
   # Get an integer option.
   fn pub int_option(option_name: ref String) -> Option[Int] {
-    match @options[option_name] {
+    match @options.get(option_name) {
       case None -> Option.None
       case Some(value) -> Option.Some(value.int("{option_name} is not an Int"))
     }
@@ -157,7 +157,7 @@ class pub ParsedArguments {
 
   # Get a boolean option.
   fn pub bool_option(option_name: ref String) -> Bool {
-    match @options[option_name] {
+    match @options.get(option_name) {
       case None -> false
       case Some(value) -> value.bool("{option_name} is not a Bool")
     }
@@ -165,7 +165,7 @@ class pub ParsedArguments {
 
   # Get a string option.
   fn pub string_option(option_name: ref String) -> Option[String] {
-    match @options[option_name] {
+    match @options.get(option_name) {
       case None -> Option.None
       case Some(value) -> Option.Some(value.string("{option_name} is not a String"))
     }
@@ -266,8 +266,8 @@ class pub ArgumentParser {
 
 
   # Construct a new ArgumentParser, passing in the program level help text describing what the application does.
-  fn pub static new(prog_text: String) -> Self {
-    Self {
+  fn pub static new(prog_text: String) -> ArgumentParser {
+    ArgumentParser {
       @arguments = Map.new
       @options = Map.new
       @short_options = Map.new
@@ -281,15 +281,15 @@ class pub ArgumentParser {
   # Every argument has a type that is validated at parse time.
   #
   # Returns self borrowed mutably so you can chain calls into a builder.
-  fn pub move add_argument(name: String, argument_type: ArgumentType, help_text: String) -> Self {
+  fn pub move add_argument(name: String, argument_type: ArgumentType, help_text: String) -> ArgumentParser {
     if @arguments.contains?(name) or @options.contains?(name) {
       panic("Argument or option with name {name} already exists")
     }
-    @arguments[name] = Argument {
+    @arguments.set(name, Argument {
       @type=argument_type,
       @name=name,
       @help_text=help_text,
-    }
+    })
     self
   }
 
@@ -298,9 +298,9 @@ class pub ArgumentParser {
   # calling add_option. Like arguments, options must be of a given type.
   #
   # As the name suggestios, options are not required, and default to None if not specified.
-  # 
+  #
   # Returns self borrowed mutably so you can chain calls into a builder.
-  fn pub move add_option(long: String, short: Option[String], argument_type: ArgumentType, help_text: String) -> Self {
+  fn pub move add_option(long: String, short: Option[String], argument_type: ArgumentType, help_text: String) -> ArgumentParser {
     if long.starts_with?('-') {
       panic("Do not include -- prefix in the option names")
     }
@@ -328,11 +328,11 @@ class pub ArgumentParser {
     }
 
     match short {
-      case Some(value) -> @short_options[value] = ref optional_argument
+      case Some(value) -> @short_options.set(value, ref optional_argument)
       case None -> nil
     }
 
-    @options[long] = optional_argument
+    @options.set(long, optional_argument)
 
     self
   }
@@ -340,7 +340,7 @@ class pub ArgumentParser {
   # Generate a nice(ish) help text for the program. Uses the program text and help texts
   # for each argument and option.
   fn pub help() -> String {
-    let help_text = StringBuffer.from_array(["\n", prog_text.clone, "\n\n"])
+    let help_text = StringBuffer.from_array(["\n", @prog_text.clone, "\n\n"])
     if (@arguments.length > 0) {
       help_text.push("Arguments:")
     }
@@ -389,7 +389,7 @@ class pub ArgumentParser {
   # This function throws a String describing the problem if it is unable to
   # parse arguments. You'll probably want to wrap it in a try that outputs
   # the string and help text on error.
-  fn pub parse(arguments: Array[String]) !! String -> ParsedArguments {
+  fn pub parse(arguments: Array[String]) -> Result[ParsedArguments, String] {
     let values = Tokenizer.new(arguments)
     let argument_names = @arguments.iter
     let parsed_arguments: Map[String, ArgumentValue] = Map.new
@@ -403,20 +403,20 @@ class pub ArgumentParser {
           break
         }
         case Some(Long(option_name)) -> {
-          let option = try @options.get(option_name).unwrap_or_throw(
+          let option = try @options.opt(option_name).to_result(
             "Unexpected option `--{option_name}`"
           )
-          parsed_options[option.long.clone] = try extract_option(option, values)
+          parsed_options.set(option.long.clone, try extract_option(option, values))
         }
         case Some(Short(short_name)) -> {
-          let option = try @short_options.get(short_name).unwrap_or_throw(
+          let option = try @short_options.opt(short_name).to_result(
             "Unexpected short option `-{short_name}`"
           )
-          parsed_options[option.long.clone] = try extract_option(option, values)
+          parsed_options.set(option.long.clone, try extract_option(option, values))
         }
         case Some(Value(argument_value)) ->  {
-          let entry = try argument_names.next.unwrap_or_throw("Too many arguments")
-          parsed_arguments[entry.key.clone] = try entry.value.type.to_argument_value(argument_value) 
+          let entry = try argument_names.next.to_result("Too many arguments")
+          parsed_arguments.set(entry.key.clone, try entry.value.type.to_argument_value(argument_value))
         }
       }
     }
@@ -433,38 +433,36 @@ class pub ArgumentParser {
         case Some(entry) -> {
           if (parsed_options.contains?(entry.key).false?) {
             match entry.value.type {
-              case Bool -> parsed_options[entry.key.clone] = Option.Some(ArgumentValue.Bool(false))
-              case _ -> parsed_options[entry.key.clone] = Option.None
+              case Bool -> parsed_options.set(entry.key.clone, Option.Some(ArgumentValue.Bool(false)))
+              case _ -> parsed_options.set(entry.key.clone, Option.None)
             }
           }
         }
       }
     }
 
-    ParsedArguments {@arguments = parsed_arguments, @options=parsed_options}
+    Result.Ok(ParsedArguments {@arguments = parsed_arguments, @options=parsed_options})
   }
 
   # Helper to call parse with the list of arguments passed on the command line.
-  fn pub parse_cli() !! String -> ParsedArguments {
-    return try parse(env.arguments)
+  fn pub parse_cli() -> Result[ParsedArguments, String]  {
+    parse(env.arguments)
   }
 }
 
 # Helper function to set the parsed_option based on possibly getting a value
 # from the iterator (or not, if it's a boolean).
-fn extract_option(option: ref OptionalArgument, values: mut Tokenizer) !! String -> Option[ArgumentValue] {
+fn extract_option(option: ref OptionalArgument, values: mut Tokenizer) -> Result[Option[ArgumentValue], String] {
   match option.type {
-    case Bool -> Option.Some(
-      ArgumentValue.Bool(true)
-    )
+    case Bool -> Result.Ok(Option.Some(ArgumentValue.Bool(true)))
     case type -> {
       let short_name_help = (option.short.as_ref.map fn (s) {"(-{s}) "}).unwrap_or("")
-      let option_value = (try values.next.unwrap_or_throw(
+      let option_value = (try values.next.to_result(
         "Option --{option.long} {short_name_help}expected an argument"
       )).unwrap
-      Option.Some(
+       Result.Ok(Option.Some(
         try type.to_argument_value(option_value)
-      )
+      ))
     }
   }
 }

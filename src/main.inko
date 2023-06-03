@@ -11,10 +11,12 @@ class async Main {
       .add_option("optional_arg", Option.Some("o"), ArgumentType.String, "An option you may or may not need")
       .add_option("bool_arg", Option.None, ArgumentType.Bool, "something you can pass or not")
 
-    let parsed = try parser.parse_cli()
-     else (message) {
-      stdout.print("\n{message}\n\n{parser.help}")
-      return
+    let parsed = match parser.parse_cli() {
+      case Ok(value) -> value
+      case Error(message) -> {
+        stdout.print("\n{message}\n\n{parser.help}")
+        return
+      }
     }
 
     stdout.print(parsed.int_argument("int_arg").to_string)
