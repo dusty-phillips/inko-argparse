@@ -1,6 +1,6 @@
 import std::env
 import std::stdio::STDOUT
-import std::test::Tests
+import std::test::(Filter, Tests)
 import test_argparse
 import test_tokenizer
 
@@ -10,7 +10,7 @@ class async Main {
     test_argparse.tests(tests)
     test_tokenizer.tests(tests)
 
-    tests.pattern = env.arguments.into_iter.next
+    tests.filter = Filter.from_string(env.arguments.opt(0).unwrap_or(''))
     tests.run
   }
 }

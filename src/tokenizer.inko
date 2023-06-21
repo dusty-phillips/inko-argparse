@@ -92,7 +92,7 @@ class pub Tokenizer {
   fn pub static new(arguments: Array[String]) -> Tokenizer {
     arguments.reverse # Stack
     Tokenizer {
-      @arguments=arguments
+      @arguments=arguments,
       @next_value=Option.None
     }
   }

@@ -268,10 +268,10 @@ class pub ArgumentParser {
   # Construct a new ArgumentParser, passing in the program level help text describing what the application does.
   fn pub static new(prog_text: String) -> ArgumentParser {
     ArgumentParser {
-      @arguments = Map.new
-      @options = Map.new
-      @short_options = Map.new
-      @prog_text = prog_text
+      @arguments = Map.new,
+      @options = Map.new,
+      @short_options = Map.new,
+      @prog_text = prog_text,
     }
   }
 

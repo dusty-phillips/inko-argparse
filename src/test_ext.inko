@@ -11,7 +11,7 @@ impl Test {
   # Asserts that the given string contains the expected string
   fn pub mut string_contains(container: ref String, contained: ref String) {
     if (container.contains?(contained)) { return }
-    
+
     @failures.push(Failure.new(container.clone(), "should contain {contained}"))
   }
 
@@ -19,17 +19,14 @@ impl Test {
   # Asserts that the given closure throws the expected value.
   #
   # Different from std::throw in that it asserts that the expected value is thrown
-  fn pub mut throws[E: Equal + fmt::Format](expected: E, block: fn !! E) {
-    try {
-      block.call 
+  fn pub mut throws[T, E: Equal[E] + fmt::Format](expected: E, block: fn () -> Result[T, E]) {
+    match block.call {
+      case Ok(got) -> @failures.push(Failure.new('no value is thrown', "{format(expected)} to be thrown"))
+      case Error(got) -> {
+        if (got == expected) { return }
+        @failures.push(Failure.new("threw {format(got)}", "to throw {format(expected)}"))
+      }
     }
-      else (got) {
-      if got == expected { return }
-      @failures.push(Failure.new("threw {format(got)}", "to throw {format(expected)}"))
-      return
-    }
-    @failures.push(Failure.new('no value is thrown', "{format(expected)} to be thrown"))
-
   }
 
   # Asserts that the given option is None
@@ -39,10 +36,17 @@ impl Test {
     }
   }
 
-  # Asserts that the given option is None
+  # Asserts that the given option is Some
   fn pub mut some[T: fmt::Format](value: Option[T]) {
     if (value.none?) {
       @failures.push(Failure.new(format(value), 'Option.Some'))
+    }
+  }
+  #
+  # Asserts that the given result is ok
+  fn pub mut ok[T, E](value: Result[T, E]) {
+    if (value.error?) {
+      @failures.push(Failure.new('To be Result.Ok', 'Result.Error'))
     }
   }
 }

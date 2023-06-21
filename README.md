@@ -19,12 +19,12 @@ It supports most of the standard stuff, though:
 
 ## Installing
 
-Ensure you have inko 0.11 or later. Use `inko pkg init` to create an empty `inko.pkg` if
+Ensure you have inko 0.12 or later. Use `inko pkg init` to create an empty `inko.pkg` if
 one doesn't exist.
 
 ```sh
 inko pkg init # if you don't already have an inko.pkg
-inko pkg add github.com/dusty-phillips/inko-argparse 0.0.3`
+inko pkg add github.com/dusty-phillips/inko-argparse 0.1.0`
 inko pkg sync
 ```
 
