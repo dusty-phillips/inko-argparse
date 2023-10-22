@@ -1,8 +1,7 @@
-import std::test::(Tests)
+import std.test.(Tests)
 import test_ext
 
-import tokenizer::(Token, Tokenizer)
-import debug_ext::(debug)
+import tokenizer.(Token, Tokenizer)
 
 
 

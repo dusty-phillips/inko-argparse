@@ -23,8 +23,7 @@ Ensure you have inko 0.12 or later. Use `inko pkg init` to create an empty `inko
 one doesn't exist.
 
 ```sh
-inko pkg init # if you don't already have an inko.pkg
-inko pkg add github.com/dusty-phillips/inko-argparse 0.1.0`
+inko pkg add github.com/dusty-phillips/inko-argparse 0.2.0`
 inko pkg sync
 ```
 
@@ -33,8 +32,8 @@ inko pkg sync
 ## Usage Example
 
 ```inko
-import argparse::(ArgumentParser, ArgumentType)
-import std::stdio::STDOUT
+import argparse.(ArgumentParser, ArgumentType)
+import std.stdio.STDOUT
 
 
 class async Main {

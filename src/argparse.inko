@@ -1,12 +1,11 @@
-import std::env
-import std::iter::(Iter)
-import std::string::(StringBuffer,ToString)
-import std::stdio::STDOUT
-import std::fmt::(Format, Formatter)
-import std::int::(Int as StdInt)
+import std.env
+import std.iter.(Iter)
+import std.string.(StringBuffer,ToString)
+import std.stdio.STDOUT
+import std.fmt.(Format, Formatter)
+import std.int.(Int as StdInt, Format as IntFormat)
 import option_ext
-import debug_ext::(debug)
-import tokenizer::(Tokenizer, Token)
+import tokenizer.(Tokenizer, Token)
 
 # All arguments are strongly typed and automatically converted
 # based on the value of this enum.
@@ -24,7 +23,7 @@ class pub enum ArgumentType {
     match self {
       case String -> Result.Ok(ArgumentValue.String(value.clone))
       case Int -> Result.Ok(ArgumentValue.Int(
-        try StdInt.from_base10(value).to_result("Could not convert `{value}` to int")
+        try StdInt.parse(value, IntFormat.Decimal).to_result("Could not convert `{value}` to int")
       ))
       case Bool -> {
         let lower = value.to_lower
@@ -328,7 +327,10 @@ class pub ArgumentParser {
     }
 
     match short {
-      case Some(value) -> @short_options.set(value, ref optional_argument)
+      case Some(value) -> {
+        @short_options.set(value, ref optional_argument)
+        nil
+      }
       case None -> nil
     }
 
@@ -341,7 +343,7 @@ class pub ArgumentParser {
   # for each argument and option.
   fn pub help() -> String {
     let help_text = StringBuffer.from_array(["\n", @prog_text.clone, "\n\n"])
-    if (@arguments.length > 0) {
+    if (@arguments.size > 0) {
       help_text.push("Arguments:")
     }
     @arguments.iter.each fn (entry) {
@@ -380,7 +382,7 @@ class pub ArgumentParser {
   }
 
   # Parse the arguments provided using the rules that were specified during setup.
-  # Normally you'll want to pass `env.arguments` (from import std::env) here
+  # Normally you'll want to pass `env.arguments` (from import std.env) here
   # (Or use parse_cli) unless you are writing a wrapper or unit tests.
   #
   # Returns a ParsedArguments object that you can look up strongly typed values
@@ -407,16 +409,19 @@ class pub ArgumentParser {
             "Unexpected option `--{option_name}`"
           )
           parsed_options.set(option.long.clone, try extract_option(option, values))
+          nil
         }
         case Some(Short(short_name)) -> {
           let option = try @short_options.opt(short_name).to_result(
             "Unexpected short option `-{short_name}`"
           )
           parsed_options.set(option.long.clone, try extract_option(option, values))
+          nil
         }
         case Some(Value(argument_value)) ->  {
           let entry = try argument_names.next.to_result("Too many arguments")
           parsed_arguments.set(entry.key.clone, try entry.value.type.to_argument_value(argument_value))
+          nil
         }
       }
     }

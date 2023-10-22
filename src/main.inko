@@ -1,5 +1,5 @@
-import argparse::(ArgumentParser, ArgumentType)
-import std::stdio::STDOUT
+import argparse.(ArgumentParser, ArgumentType)
+import std.stdio.STDOUT
 
 
 class async Main {

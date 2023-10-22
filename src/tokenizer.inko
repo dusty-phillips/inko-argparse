@@ -1,6 +1,6 @@
-import std::cmp::Equal
-import std::iter::(Iter)
-import std::fmt::(Format, Formatter)
+import std.cmp.Equal
+import std.iter.(Iter)
+import std.fmt.(Format, Formatter)
 
 # A typed token for command line parsing
 class pub enum Token {
@@ -111,20 +111,20 @@ impl Iter[Token] for Tokenizer {
     match @arguments.pop {
       case None -> Option.None
       case Some(value) if short_option?(value) -> {
-        Option.Some(Token.Short(value.slice(1, 1)))
+        Option.Some(Token.Short(value.substring(1, 1)))
       }
       case Some(value) if long_option?(value) -> {
         let equals_index = value.byte_index('=', 2)
         match ref equals_index {
-          case None -> Option.Some(Token.Long(value.slice(2, value.size)))
+          case None -> Option.Some(Token.Long(value.substring(2, value.size)))
           case Some(index) if index == (value.size - 1) -> {
             # I arbitrarily decided that `--ends_with_equals=` should parse as a
             # value token.
             Option.Some(Token.Value(value))
           }
           case Some(index) -> {
-            @next_value = Option.Some(value.slice(index + 1, value.size))
-            Option.Some(Token.Long(value.slice(2, index - 2)))
+            @next_value = Option.Some(value.substring(index + 1, value.size))
+            Option.Some(Token.Long(value.substring(2, index - 2)))
           }
         }
       }
@@ -140,6 +140,6 @@ fn short_option?(value: ref String) -> Bool {
 }
 
 fn long_option?(value: ref String) -> Bool {
-  value.size > 2 and value.slice(0, 2) == '--'
+  value.size > 2 and value.substring(0, 2) == '--'
 }
 

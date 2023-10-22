@@ -1,7 +1,6 @@
-import std::cmp::(Equal)
-import std::fmt
-import std::test::(Test, Failure)
-import debug_ext::(format)
+import std.cmp.(Equal)
+import std.fmt
+import std.test.(Test, Failure)
 
 # Extend the Test class with some extra assertions that I find useful.
 # I am patching Test here as I think these extensions could be useful
@@ -18,28 +17,28 @@ impl Test {
 
   # Asserts that the given closure throws the expected value.
   #
-  # Different from std::throw in that it asserts that the expected value is thrown
-  fn pub mut throws[T, E: Equal[E] + fmt::Format](expected: E, block: fn () -> Result[T, E]) {
+  # Different from std.throw in that it asserts that the expected value is thrown
+  fn pub mut throws[T, E: Equal[E] + fmt.Format](expected: E, block: fn () -> Result[T, E]) {
     match block.call {
-      case Ok(got) -> @failures.push(Failure.new('no value is thrown', "{format(expected)} to be thrown"))
+      case Ok(got) -> @failures.push(Failure.new('no value is thrown', "{fmt.fmt(expected)} to be thrown"))
       case Error(got) -> {
         if (got == expected) { return }
-        @failures.push(Failure.new("threw {format(got)}", "to throw {format(expected)}"))
+        @failures.push(Failure.new("threw {fmt.fmt(got)}", "to throw {fmt.fmt(expected)}"))
       }
     }
   }
 
   # Asserts that the given option is None
-  fn pub mut none[T: fmt::Format](value: Option[T]) {
+  fn pub mut none[T: fmt.Format](value: Option[T]) {
     if (value.some?) {
-      @failures.push(Failure.new(format(value), 'Option.None'))
+      @failures.push(Failure.new(fmt.fmt(value as fmt.Format), 'Option.None'))
     }
   }
 
   # Asserts that the given option is Some
-  fn pub mut some[T: fmt::Format](value: Option[T]) {
+  fn pub mut some[T: fmt.Format](value: Option[T]) {
     if (value.none?) {
-      @failures.push(Failure.new(format(value), 'Option.Some'))
+      @failures.push(Failure.new(fmt.fmt(value), 'Option.Some'))
     }
   }
   #
